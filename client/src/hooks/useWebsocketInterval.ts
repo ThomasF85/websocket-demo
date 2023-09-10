@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useWebsocket } from "./useWebsocket";
-import { Plane } from "../utils/Plane";
+import { Plane } from "@websocket-demo/shared";
 
 // This websocket hook will only update the state once every intervalMilliseconds milliseconds,
 // while still keeping track of messages internally.

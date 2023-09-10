@@ -8,18 +8,14 @@ wss.on("connection", (ws) => {
     ws.send(JSON.stringify(planes));
   });
 
-  /*const closeWsCallback = setTimeout(() => {
-    ws.close();
-  }, 10000);*/
-
   ws.on("message", (data) => {
     console.log(`Client has sent us: ${data}`);
   });
 
   ws.on("close", () => {
     unsubscribe(id);
-    //clearTimeout(closeWsCallback);
   });
+
   // handling client connection error
   ws.onerror = function () {
     console.log("Some Error occurred");

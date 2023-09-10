@@ -6,9 +6,9 @@
     "shared:build": "npm run build -w shared",
     "client:build": "npm run build -w client",
     "server:build": "npm run build -w server",
-    "client": "npm run dev -w client",
-    "server": "npm run dev -w server",
-    "dev": "npm-run-all --parallel client server"
+    "client:dev": "npm run dev -w client",
+    "server:dev": "npm run dev -w server",
+    "dev": "npm-run-all --parallel client:dev server:dev"
   },
   "workspaces": [
     "server",

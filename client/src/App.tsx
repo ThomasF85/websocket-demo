@@ -1,6 +1,5 @@
 import "./App.css";
 import { useWebSocketInterval } from "./hooks/useWebsocketInterval";
-import { useWebSocketNthTime } from "./hooks/useWebsocketNthTime";
 
 function App() {
   return (
