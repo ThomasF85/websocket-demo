@@ -2,7 +2,7 @@ import { WebSocketServer } from "ws";
 import { createFlightService } from "./flightService";
 
 const wss = new WebSocketServer({ port: 3042 });
-const { subscribe, unsubscribe } = createFlightService(100);
+const { subscribe, unsubscribe } = createFlightService(1000);
 
 wss.on("connection", (ws) => {
   const id = subscribe((flights) => {

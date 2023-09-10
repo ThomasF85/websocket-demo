@@ -67,8 +67,8 @@ function createFlights(count: number, area: Area): FlightWithVelocity[] {
           Math.random() * (area.latitude.max - area.latitude.min),
       },
       velocity: {
-        longitude: 0.1 * (Math.random() * 2 - 1),
-        latitude: 0.1 * (Math.random() * 2 - 1),
+        longitude: 0.01 * (Math.random() * 2 - 1),
+        latitude: 0.01 * (Math.random() * 2 - 1),
       },
     });
   }
@@ -80,11 +80,23 @@ function advance(snapshot: FlightsSnapshot): FlightsSnapshot {
   const timeDiff = (now - snapshot.snapShotTime) / 1000;
   const flights = snapshot.flights.map((flight) => {
     const velocity = flight.velocity;
+    const longitude = flight.position.longitude + velocity.longitude * timeDiff;
+    const latitude = flight.position.latitude + velocity.latitude * timeDiff;
     return {
       ...flight,
       position: {
-        longitude: flight.position.longitude + velocity.longitude * timeDiff,
-        latitude: flight.position.latitude + velocity.latitude * timeDiff,
+        longitude:
+          longitude < area.longitude.min
+            ? area.longitude.max
+            : longitude > area.longitude.max
+            ? area.longitude.min
+            : longitude,
+        latitude:
+          latitude < area.latitude.min
+            ? area.latitude.max
+            : latitude > area.latitude.max
+            ? area.latitude.min
+            : latitude,
       },
     };
   });

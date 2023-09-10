@@ -1,7 +1,6 @@
 #root {
   max-width: 1280px;
   margin: 0 auto;
-  padding: 2rem;
   text-align: center;
 }
 
@@ -11,6 +10,30 @@
   will-change: filter;
   transition: filter 300ms;
 }
+
+header {
+  height: 6em;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+main {
+  height: calc(100vh - 6em);
+}
+
+.subtitle {
+  height: 2em;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4em;
+}
+
+h1 {
+  margin: 0;
+}
+
 .logo:hover {
   filter: drop-shadow(0 0 2em #646cffaa);
 }

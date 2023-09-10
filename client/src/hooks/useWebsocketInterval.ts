@@ -6,16 +6,16 @@ import { Flight } from "@websocket-demo/shared";
 // while still keeping track of messages internally.
 
 export function useWebSocketInterval(intervalMilliseconds: number) {
-  const planesRef = useRef<Flight[]>([]);
-  const [planes, setPlanes] = useState<Flight[]>([]);
+  const flightsRef = useRef<Flight[]>([]);
+  const [flights, setFlights] = useState<Flight[]>([]);
   const onPlanes = (flights: Flight[]) => {
-    planesRef.current = flights;
+    flightsRef.current = flights;
   };
   const { connected } = useWebsocket(onPlanes);
 
   useEffect(() => {
     const interval = setInterval(() => {
-      setPlanes(planesRef.current);
+      setFlights(flightsRef.current);
     }, intervalMilliseconds);
 
     return () => {
@@ -23,5 +23,5 @@ export function useWebSocketInterval(intervalMilliseconds: number) {
     };
   }, [intervalMilliseconds]);
 
-  return { connected, planes };
+  return { connected, flights };
 }
