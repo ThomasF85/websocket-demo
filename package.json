@@ -1,0 +1,21 @@
+{
+  "name": "websocket-demo",
+  "version": "0.1.0",
+  "scripts": {
+    "build": "npm run shared:build && npm-run-all --parallel client:build server:build",
+    "shared:build": "npm run build -w shared",
+    "client:build": "npm run build -w client",
+    "server:build": "npm run build -w server",
+    "client": "npm run dev -w client",
+    "server": "npm run dev -w server",
+    "dev": "npm-run-all --parallel client server"
+  },
+  "workspaces": [
+    "server",
+    "client",
+    "shared"
+  ],
+  "dependencies": {
+    "npm-run-all": "^4.1.5"
+  }
+}

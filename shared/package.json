@@ -1,0 +1,27 @@
+{
+  "name": "@websocket-demo/shared",
+  "version": "0.1.0",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "devDependencies": {
+    "typescript": "^4.8.4"
+  },
+  "scripts": {
+    "build": "rm -rf dist/* && tsc -p tsconfig.json",
+    "dev": "tsc -p tsconfig.json --watch"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ThomasF85/pinnwand.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/ThomasF85/pinnwand/issues"
+  },
+  "homepage": "https://github.com/ThomasF85/pinnwand#readme",
+  "dependencies": {
+    "nanoid": "^4.0.0"
+  }
+}
