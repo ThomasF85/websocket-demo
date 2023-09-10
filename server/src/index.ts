@@ -1,11 +1,12 @@
 import { WebSocketServer } from "ws";
-import { subscribe, unsubscribe } from "./flightMonitor";
+import { createFlightService } from "./flightService";
 
 const wss = new WebSocketServer({ port: 3042 });
+const { subscribe, unsubscribe } = createFlightService(100);
 
 wss.on("connection", (ws) => {
-  const id = subscribe((planes) => {
-    ws.send(JSON.stringify(planes));
+  const id = subscribe((flights) => {
+    ws.send(JSON.stringify(flights));
   });
 
   ws.on("message", (data) => {

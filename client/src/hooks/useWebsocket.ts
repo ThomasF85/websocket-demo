@@ -1,10 +1,10 @@
+import { Flight } from "@websocket-demo/shared";
 import { useEffect, useRef, useState } from "react";
-import { Plane } from "@websocket-demo/shared";
 const WEB_SOCKET_URL = "ws://localhost:3042";
 
 const reconnectDelays = [200, 1000, 2000, 5000, 10000];
 
-export function useWebsocket(callback: (planes: Plane[]) => void) {
+export function useWebsocket(callback: (flights: Flight[]) => void) {
   const websocket = useRef<WebSocket | null>(null);
   const reconnectDelayIndex = useRef<number>(-1);
   const [connected, setConnected] = useState<boolean>(false);
