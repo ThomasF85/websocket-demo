@@ -1,5 +1,5 @@
 import { nanoid } from "nanoid";
-import { Flight, Vector, Area } from "@websocket-demo/shared";
+import { Flight, Area } from "@websocket-demo/shared";
 
 export function createFlightService(numberOfPlanes: number) {
   const callbacks: Record<string, (planes: Flight[]) => void> = {};
@@ -37,7 +37,7 @@ export function createFlightService(numberOfPlanes: number) {
 const area: Area = {
   longitude: {
     min: 5.5,
-    max: 13,
+    max: 15,
   },
   latitude: {
     min: 47.5,
@@ -45,12 +45,8 @@ const area: Area = {
   },
 };
 
-type FlightWithVelocity = Flight & {
-  velocity: Vector;
-};
-
-function createFlights(count: number, area: Area): FlightWithVelocity[] {
-  const flights: FlightWithVelocity[] = [];
+function createFlights(count: number, area: Area): Flight[] {
+  const flights: Flight[] = [];
   for (let i = 0; i < count; i++) {
     flights.push({
       id: nanoid(),
@@ -66,10 +62,7 @@ function createFlights(count: number, area: Area): FlightWithVelocity[] {
           area.latitude.min +
           Math.random() * (area.latitude.max - area.latitude.min),
       },
-      velocity: {
-        longitude: 0.01 * (Math.random() * 2 - 1),
-        latitude: 0.01 * (Math.random() * 2 - 1),
-      },
+      heading: Math.random() * 2 * Math.PI,
     });
   }
   return flights;
@@ -79,9 +72,10 @@ function advance(snapshot: FlightsSnapshot): FlightsSnapshot {
   const now = Date.now();
   const timeDiff = (now - snapshot.snapShotTime) / 1000;
   const flights = snapshot.flights.map((flight) => {
-    const velocity = flight.velocity;
-    const longitude = flight.position.longitude + velocity.longitude * timeDiff;
-    const latitude = flight.position.latitude + velocity.latitude * timeDiff;
+    const longitude =
+      flight.position.longitude + Math.sin(flight.heading) * 0.002 * timeDiff;
+    const latitude =
+      flight.position.latitude + Math.cos(flight.heading) * 0.002 * timeDiff;
     return {
       ...flight,
       position: {
@@ -108,7 +102,7 @@ function advance(snapshot: FlightsSnapshot): FlightsSnapshot {
 }
 
 type FlightsSnapshot = {
-  flights: FlightWithVelocity[];
+  flights: Flight[];
   snapShotTime: number;
   area: Area;
 };

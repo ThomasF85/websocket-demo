@@ -5,24 +5,39 @@ import { useWebSocketInterval } from "./hooks/useWebsocketInterval";
 import { Point } from "ol/geom";
 import { transform } from "ol/proj";
 import { Flight } from "@websocket-demo/shared";
-import { useState } from "react";
+import { useRef, useState } from "react";
+import Style from "ol/style/Style";
+import Icon from "ol/style/Icon";
+import plane from "/plane.png";
 
-function toFeature(flight: Flight): Feature {
-  console.log(flight.position.longitude, flight.position.latitude);
-  return new Feature({
-    geometry: new Point(
-      transform(
-        [flight.position.longitude, flight.position.latitude],
-        "EPSG:4326",
-        "EPSG:3857"
-      )
-    ),
-    name: flight.id,
+function toFeatures(flights: Flight[], zoom: number): Feature[] {
+  const scale = zoom < 7.5 ? 0.6 : zoom < 8.5 ? 0.8 : 1;
+  return flights.map((flight) => {
+    const style = new Style({
+      image: new Icon({
+        src: plane,
+        rotation: flight.heading,
+        scale,
+      }),
+    });
+    const feature = new Feature({
+      geometry: new Point(
+        transform(
+          [flight.position.longitude, flight.position.latitude],
+          "EPSG:4326",
+          "EPSG:3857"
+        )
+      ),
+      name: flight.id,
+    });
+    feature.setStyle(style);
+    return feature;
   });
 }
 
 function App() {
   const [interval, setInterval] = useState(250);
+  const zoomRef = useRef<number | undefined>();
   const { connected, flights } = useWebSocketInterval(interval);
 
   return (
@@ -49,7 +64,12 @@ function App() {
             </select>
           </label>
         </div>
-        <MapWrapper features={flights.map(toFeature)} />
+        <MapWrapper
+          onZoomChange={(zoom?: number) => {
+            zoomRef.current = zoom;
+          }}
+          features={toFeatures(flights, zoomRef.current || 9)}
+        />
       </main>
     </>
   );

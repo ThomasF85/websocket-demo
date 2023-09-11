@@ -7,4 +7,5 @@ export type Flight = {
   arrival: string;
   departure: string;
   position: Vector;
+  heading: number;
 };

@@ -10,20 +10,13 @@ import { Coordinate, toStringXY } from "ol/coordinate";
 import { Geometry } from "ol/geom";
 import { Feature, MapBrowserEvent } from "ol";
 import "./Map.css";
-import Style from "ol/style/Style";
-import Icon from "ol/style/Icon";
-import circle from "/circle.png";
-
-const style = new Style({
-  image: new Icon({
-    src: circle,
-  }),
-});
 
 export default function MapWrapper({
   features,
+  onZoomChange,
 }: {
   features: Feature<Geometry>[];
+  onZoomChange: (zoom?: number) => void;
 }) {
   const featuresLayer = useRef<VectorLayer<VectorSource<Geometry>>>();
   const mapElement = useRef<HTMLDivElement | null>(null);
@@ -36,7 +29,6 @@ export default function MapWrapper({
 
     featuresLayer.current = new VectorLayer({
       source: new VectorSource(),
-      style,
     });
 
     mapRef.current = new Map({
@@ -57,7 +49,9 @@ export default function MapWrapper({
       }),
       controls: [],
     });
-
+    mapRef.current.on("moveend", () => {
+      onZoomChange(mapRef.current!.getView().getZoom());
+    });
     mapRef.current.on("click", handleMapClick);
   }, []);
 
