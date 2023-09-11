@@ -1,6 +1,8 @@
 import { nanoid } from "nanoid";
 import { Flight, Area } from "@websocket-demo/shared";
 
+const SPEED_METERS_PER_SECOND = 250;
+
 export function createFlightService(numberOfPlanes: number) {
   const callbacks: Record<string, (planes: Flight[]) => void> = {};
 
@@ -68,58 +70,36 @@ function createFlights(count: number, area: Area): Flight[] {
   return flights;
 }
 
-const correctionVectorCache: Record<
-  string,
-  { latitude: number; longitude: number }
-> = {};
-
-function calcCorrectionVector(latitude: number) {
-  const cos = Math.cos((latitude * Math.PI) / 180);
-  const correctionVector = {
-    latitude: 1 / Math.sqrt(1 + cos * cos),
-    longitude: cos / Math.sqrt(1 + cos * cos),
+function nextPosition(flight: Flight, distanceMeters: number): Flight {
+  const la1 = flight.position.latitude * (Math.PI / 180);
+  const lo1 = flight.position.longitude * (Math.PI / 180);
+  const angularDistance = distanceMeters / 6371000;
+  const heading = flight.heading;
+  const la2 = Math.asin(
+    Math.sin(la1) * Math.cos(angularDistance) +
+      Math.cos(la1) * Math.sin(angularDistance) * Math.cos(heading)
+  );
+  const lo2 =
+    lo1 +
+    Math.atan2(
+      Math.sin(heading) * Math.sin(angularDistance) * Math.cos(la1),
+      Math.cos(angularDistance) - Math.sin(la1) * Math.sin(la2)
+    );
+  return {
+    ...flight,
+    position: {
+      latitude: la2 * (180 / Math.PI),
+      longitude: lo2 * (180 / Math.PI),
+    },
   };
-  return correctionVector;
-}
-
-function getCorrectionVector(latitude: number) {
-  const cacheKey = `${Math.round(latitude)}`;
-  if (!correctionVectorCache[cacheKey]) {
-    correctionVectorCache[cacheKey] = calcCorrectionVector(latitude);
-  }
-  return correctionVectorCache[cacheKey];
 }
 
 function advance(snapshot: FlightsSnapshot): FlightsSnapshot {
   const now = Date.now();
-  const timeDiff = (now - snapshot.snapShotTime) / 1000;
+  const timeDiffSeconds = (now - snapshot.snapShotTime) / 1000;
+  const distance = SPEED_METERS_PER_SECOND * timeDiffSeconds;
   const flights = snapshot.flights.map((flight) => {
-    const correctionVector = getCorrectionVector(flight.position.latitude);
-    const longitude =
-      flight.position.longitude +
-      (Math.sin(flight.heading) / correctionVector.longitude) *
-        0.002 *
-        timeDiff;
-    const latitude =
-      flight.position.latitude +
-      (Math.cos(flight.heading) / correctionVector.latitude) * 0.002 * timeDiff;
-    return {
-      ...flight,
-      position: {
-        longitude:
-          longitude < area.longitude.min
-            ? area.longitude.max
-            : longitude > area.longitude.max
-            ? area.longitude.min
-            : longitude,
-        latitude:
-          latitude < area.latitude.min
-            ? area.latitude.max
-            : latitude > area.latitude.max
-            ? area.latitude.min
-            : latitude,
-      },
-    };
+    return nextPosition(flight, distance);
   });
   return {
     flights,
