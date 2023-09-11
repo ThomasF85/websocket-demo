@@ -68,14 +68,41 @@ function createFlights(count: number, area: Area): Flight[] {
   return flights;
 }
 
+const correctionVectorCache: Record<
+  string,
+  { latitude: number; longitude: number }
+> = {};
+
+function calcCorrectionVector(latitude: number) {
+  const cos = Math.cos((latitude * Math.PI) / 180);
+  const correctionVector = {
+    latitude: 1 / Math.sqrt(1 + cos * cos),
+    longitude: cos / Math.sqrt(1 + cos * cos),
+  };
+  return correctionVector;
+}
+
+function getCorrectionVector(latitude: number) {
+  const cacheKey = `${Math.round(latitude)}`;
+  if (!correctionVectorCache[cacheKey]) {
+    correctionVectorCache[cacheKey] = calcCorrectionVector(latitude);
+  }
+  return correctionVectorCache[cacheKey];
+}
+
 function advance(snapshot: FlightsSnapshot): FlightsSnapshot {
   const now = Date.now();
   const timeDiff = (now - snapshot.snapShotTime) / 1000;
   const flights = snapshot.flights.map((flight) => {
+    const correctionVector = getCorrectionVector(flight.position.latitude);
     const longitude =
-      flight.position.longitude + Math.sin(flight.heading) * 0.002 * timeDiff;
+      flight.position.longitude +
+      (Math.sin(flight.heading) / correctionVector.longitude) *
+        0.002 *
+        timeDiff;
     const latitude =
-      flight.position.latitude + Math.cos(flight.heading) * 0.002 * timeDiff;
+      flight.position.latitude +
+      (Math.cos(flight.heading) / correctionVector.latitude) * 0.002 * timeDiff;
     return {
       ...flight,
       position: {
