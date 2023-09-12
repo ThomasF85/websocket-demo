@@ -1,17 +1,15 @@
-import { useEffect, useRef, useState } from "react";
-import { useWebsocket } from "./useWebsocket";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Flight } from "@websocket-demo/shared";
 
 // This websocket hook will only update the state once every intervalMilliseconds milliseconds,
 // while still keeping track of messages internally.
 
-export function useWebSocketInterval(intervalMilliseconds: number) {
+export function useUpdateFlights(intervalMilliseconds: number) {
   const flightsRef = useRef<Flight[]>([]);
   const [flights, setFlights] = useState<Flight[]>([]);
-  const onPlanes = (flights: Flight[]) => {
+  const update = useCallback((flights: Flight[]) => {
     flightsRef.current = flights;
-  };
-  const { connected } = useWebsocket(onPlanes);
+  }, []);
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -23,5 +21,5 @@ export function useWebSocketInterval(intervalMilliseconds: number) {
     };
   }, [intervalMilliseconds]);
 
-  return { connected, flights };
+  return { update, flights };
 }

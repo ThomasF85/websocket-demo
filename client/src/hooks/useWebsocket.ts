@@ -1,13 +1,14 @@
-import { Flight } from "@websocket-demo/shared";
 import { useEffect, useRef, useState } from "react";
+import { useUpdateFlights } from "./useUpdateFlights";
 const WEB_SOCKET_URL = "ws://localhost:3042";
 
 const reconnectDelays = [200, 1000, 2000, 5000, 10000];
 
-export function useWebsocket(callback: (flights: Flight[]) => void) {
+export function useWebsocket(intervalMilliseconds: number) {
   const websocket = useRef<WebSocket | null>(null);
   const reconnectDelayIndex = useRef<number>(-1);
   const [connected, setConnected] = useState<boolean>(false);
+  const { update, flights } = useUpdateFlights(intervalMilliseconds);
 
   useEffect(() => {
     function connect() {
@@ -17,7 +18,7 @@ export function useWebsocket(callback: (flights: Flight[]) => void) {
         reconnectDelayIndex.current = -1;
       };
       ws.onmessage = (evt: { data: string }) => {
-        callback(JSON.parse(evt.data));
+        update(JSON.parse(evt.data));
       };
       ws.onclose = () => {
         console.log("websocket closed");
@@ -40,5 +41,5 @@ export function useWebsocket(callback: (flights: Flight[]) => void) {
     };
   }, []);
 
-  return { connected };
+  return { connected, flights };
 }

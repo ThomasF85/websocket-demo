@@ -10,6 +10,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@stomp/stompjs": "^7.0.0",
     "@websocket-demo/shared": "file:../shared",
     "ol": "^8.1.0",
     "react": "^18.2.0",
