@@ -5,8 +5,8 @@ const wss = new WebSocketServer({ port: 3042 });
 const { subscribe, unsubscribe } = createFlightService(1000);
 
 wss.on("connection", (ws) => {
-  const id = subscribe((flights) => {
-    ws.send(JSON.stringify(flights));
+  const id = subscribe((flights, warnings) => {
+    ws.send(JSON.stringify({ flights, warnings }));
   });
 
   ws.on("message", (data) => {

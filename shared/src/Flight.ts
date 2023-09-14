@@ -1,11 +1,12 @@
-import { Vector } from "./Vector";
+import { Coordinate } from "./Vector";
 
 export type Flight = {
   id: string;
   flightNumber: string;
-  airline: string;
-  arrival: string;
-  departure: string;
-  position: Vector;
+  position: Coordinate;
   heading: number;
+  axis: {
+    roll: Coordinate;
+    pitch: Coordinate;
+  };
 };

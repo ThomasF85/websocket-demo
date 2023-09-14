@@ -1,3 +1,10 @@
 export type { Flight } from "./Flight";
-export type { Vector } from "./Vector";
+export type { Coordinate, Vector } from "./Vector";
 export type { Area } from "./Area";
+export type { ProximityWarning } from "./ProximityWarning";
+export {
+  getAxis,
+  advancePosition,
+  getDistance,
+  getNormalizedDirection,
+} from "./utils";

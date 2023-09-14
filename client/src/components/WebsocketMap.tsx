@@ -4,7 +4,7 @@ import { useWebsocket } from "../hooks/useWebsocket";
 import { useRef } from "react";
 
 export default function WebsocketMap({ interval }: { interval: number }) {
-  const { connected, flights } = useWebsocket(interval);
+  const { connected, flights, warnings } = useWebsocket(interval);
   const zoomRef = useRef<number | undefined>();
 
   return (
@@ -14,7 +14,7 @@ export default function WebsocketMap({ interval }: { interval: number }) {
         onZoomChange={(zoom?: number) => {
           zoomRef.current = zoom;
         }}
-        features={toFeatures(flights, zoomRef.current || 9)}
+        features={toFeatures(flights, warnings, zoomRef.current || 9)}
       />
     </>
   );

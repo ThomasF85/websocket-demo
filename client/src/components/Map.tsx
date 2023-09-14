@@ -45,7 +45,7 @@ export default function MapWrapper({
       view: new View({
         projection: "EPSG:3857",
         center: transform([8.6, 50.1], "EPSG:4326", "EPSG:3857"),
-        zoom: 10,
+        zoom: 9,
       }),
       controls: [],
     });

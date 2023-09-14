@@ -8,7 +8,7 @@ export function useWebsocket(intervalMilliseconds: number) {
   const websocket = useRef<WebSocket | null>(null);
   const reconnectDelayIndex = useRef<number>(-1);
   const [connected, setConnected] = useState<boolean>(false);
-  const { update, flights } = useUpdateFlights(intervalMilliseconds);
+  const { update, flights, warnings } = useUpdateFlights(intervalMilliseconds);
 
   useEffect(() => {
     function connect() {
@@ -41,5 +41,5 @@ export function useWebsocket(intervalMilliseconds: number) {
     };
   }, []);
 
-  return { connected, flights };
+  return { connected, flights, warnings };
 }
