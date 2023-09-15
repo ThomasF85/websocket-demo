@@ -93,6 +93,7 @@ export function createFlightService(numberOfPlanes: number) {
   );
 
   const interval = setInterval(() => {
+    flightsSnapshot = advance(flightsSnapshot);
     const transformedFlights = transformFlights(flightsSnapshot.flights);
     const transformedWarnings = transformWarnings(flightsSnapshot.warnings);
     Object.values(callbacks).forEach((callback) =>
