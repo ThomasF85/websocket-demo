@@ -5,6 +5,7 @@ export type Flight = {
   flightNumber: string;
   position: Coordinate;
   heading: number;
+  velocity: number;
   axis: {
     roll: Coordinate;
     pitch: Coordinate;

@@ -1,4 +1,4 @@
-import { Coordinate } from "./Vector";
+import { Coordinate } from "@websocket-demo/shared";
 
 export function getAxis(
   latitude: number,
@@ -15,11 +15,8 @@ export function getAxis(
 
 const RADIUS_EARTH = 6371000;
 const ANGULAR_DISTANCE_1METER = 1 / RADIUS_EARTH;
-const TO_RADIANS = Math.PI / 180;
-const TO_DEGREES = 180 / Math.PI;
 
-export function getNormalizedDirection(heading: number, latitude: number) {
-  const la1 = latitude * TO_RADIANS;
+export function getNormalizedDirection(heading: number, la1: number) {
   const la2 = Math.asin(
     Math.sin(la1) * Math.cos(ANGULAR_DISTANCE_1METER) +
       Math.cos(la1) * Math.sin(ANGULAR_DISTANCE_1METER) * Math.cos(heading)
@@ -29,8 +26,8 @@ export function getNormalizedDirection(heading: number, latitude: number) {
     Math.cos(ANGULAR_DISTANCE_1METER) - Math.sin(la1) * Math.sin(la2)
   );
   return {
-    latitude: (la2 - la1) * TO_DEGREES,
-    longitude: lo2 * TO_DEGREES,
+    latitude: la2 - la1,
+    longitude: lo2,
   };
 }
 
@@ -39,8 +36,26 @@ export function advancePosition(
   heading: number,
   meters: number
 ) {
-  const la1 = position.latitude * TO_RADIANS;
-  const lo1 = position.longitude * TO_RADIANS;
+  const newPosition = futurePosition(position, heading, meters);
+  const newHeading = getNewBearing(
+    position.latitude,
+    newPosition.latitude,
+    position.longitude,
+    newPosition.longitude
+  );
+  return {
+    position: newPosition,
+    heading: newHeading,
+  };
+}
+
+export function futurePosition(
+  position: Coordinate,
+  heading: number,
+  meters: number
+) {
+  const la1 = position.latitude;
+  const lo1 = position.longitude;
   const angularDistance = meters / RADIUS_EARTH;
   const la2 = Math.asin(
     Math.sin(la1) * Math.cos(angularDistance) +
@@ -52,13 +67,9 @@ export function advancePosition(
       Math.sin(heading) * Math.sin(angularDistance) * Math.cos(la1),
       Math.cos(angularDistance) - Math.sin(la1) * Math.sin(la2)
     );
-  const newHeading = getNewBearing(la1, la2, lo1, lo2);
   return {
-    position: {
-      latitude: la2 * TO_DEGREES,
-      longitude: lo2 * TO_DEGREES,
-    },
-    heading: newHeading,
+    latitude: la2,
+    longitude: lo2,
   };
 }
 
@@ -77,10 +88,10 @@ function getNewBearing(p1La: number, p2La: number, p1Lo: number, p2Lo: number) {
 }
 
 export function getDistance(position1: Coordinate, position2: Coordinate) {
-  const la1 = position1.latitude * TO_RADIANS;
-  const la2 = position2.latitude * TO_RADIANS;
+  const la1 = position1.latitude;
+  const la2 = position2.latitude;
   const deltaLa = la2 - la1;
-  const deltaLo = (position2.longitude - position1.longitude) * TO_RADIANS;
+  const deltaLo = position2.longitude - position1.longitude;
 
   const a =
     Math.sin(deltaLa / 2) * Math.sin(deltaLa / 2) +

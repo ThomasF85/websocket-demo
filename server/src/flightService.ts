@@ -2,15 +2,16 @@ import { nanoid } from "nanoid";
 import {
   Flight,
   Area,
-  getAxis,
-  advancePosition,
-  getDistance,
   Coordinate,
-  getNormalizedDirection,
   ProximityWarning,
 } from "@websocket-demo/shared";
+import {
+  advancePosition,
+  getAxis,
+  getDistance,
+  getNormalizedDirection,
+} from "./utils/utils";
 
-const SPEED_METERS_PER_SECOND = 250;
 const DISTANCE_FOR_PROXIMITY_CHECK = 50000;
 const DISTANCE_FOR_PROXIMITY_WARNING = 5000;
 
@@ -25,10 +26,70 @@ const area: Area = {
   },
 };
 
-const MAX_LATITUDE_PER_METER = 0.000009;
-const MAX_LONGITUDE_PER_METER = getAxis(area.latitude.max, 0).pitch.longitude;
+const TO_DEGREES = 180 / Math.PI;
+const METERS_PER_LATITUDE = 6371000;
+const MIN_METERS_PER_LONGITUDE = Math.abs(
+  1 / getAxis(area.latitude.min, 0).pitch.longitude
+);
 
-const LATITUDE_TO_METERS = 111139;
+function transformFlights(flights: Flight[]): Flight[] {
+  return flights.map((flight) => {
+    return {
+      ...flight,
+      position: {
+        longitude: flight.position.longitude * TO_DEGREES,
+        latitude: flight.position.latitude * TO_DEGREES,
+      },
+      axis: {
+        roll: {
+          longitude: flight.axis.roll.longitude * TO_DEGREES,
+          latitude: flight.axis.roll.latitude * TO_DEGREES,
+        },
+        pitch: {
+          longitude: flight.axis.pitch.longitude * TO_DEGREES,
+          latitude: flight.axis.pitch.latitude * TO_DEGREES,
+        },
+      },
+    };
+  });
+}
+
+function transformWarnings(warnings: ProximityWarning[]): ProximityWarning[] {
+  return warnings.map((warning) => {
+    return {
+      ...warning,
+      encounter: {
+        timeToEncounter: warning.encounter.timeToEncounter,
+        position1: {
+          now: {
+            longitude: warning.encounter.position1.now.longitude * TO_DEGREES,
+            latitude: warning.encounter.position1.now.latitude * TO_DEGREES,
+          },
+          encounter: {
+            longitude:
+              warning.encounter.position1.encounter.longitude * TO_DEGREES,
+            latitude:
+              warning.encounter.position1.encounter.latitude * TO_DEGREES,
+          },
+        },
+        position2: {
+          ...warning.encounter.position2,
+          now: {
+            longitude: warning.encounter.position2.now.longitude * TO_DEGREES,
+            latitude: warning.encounter.position2.now.latitude * TO_DEGREES,
+          },
+          encounter: {
+            longitude:
+              warning.encounter.position2.encounter.longitude * TO_DEGREES,
+            latitude:
+              warning.encounter.position2.encounter.latitude * TO_DEGREES,
+          },
+        },
+        distance: warning.encounter.distance,
+      },
+    };
+  });
+}
 
 export function createFlightService(numberOfPlanes: number) {
   const callbacks: Record<
@@ -46,7 +107,10 @@ export function createFlightService(numberOfPlanes: number) {
   const interval = setInterval(() => {
     flightsSnapshot = advance(flightsSnapshot);
     Object.values(callbacks).forEach((callback) =>
-      callback(flightsSnapshot.flights, flightsSnapshot.warnings)
+      callback(
+        transformFlights(flightsSnapshot.flights),
+        transformWarnings(flightsSnapshot.warnings)
+      )
     );
   }, 50);
 
@@ -73,11 +137,13 @@ function createFlights(count: number, area: Area): Flight[] {
   const flights: Flight[] = [];
   for (let i = 0; i < count; i++) {
     const longitude =
-      area.longitude.min +
-      Math.random() * (area.longitude.max - area.longitude.min);
+      (area.longitude.min +
+        Math.random() * (area.longitude.max - area.longitude.min)) /
+      TO_DEGREES;
     const latitude =
-      area.latitude.min +
-      Math.random() * (area.latitude.max - area.latitude.min);
+      (area.latitude.min +
+        Math.random() * (area.latitude.max - area.latitude.min)) /
+      TO_DEGREES;
     const heading = Math.random() * 2 * Math.PI;
     flights.push({
       id: nanoid(),
@@ -87,6 +153,7 @@ function createFlights(count: number, area: Area): Flight[] {
         latitude,
       },
       heading,
+      velocity: 150 + Math.random() * 200,
       axis: getAxis(latitude, heading),
     });
   }
@@ -119,11 +186,7 @@ function findProximityWarnings(flights: Flight[]) {
       ) {
         const distance = getDistance(flight1.position, flight2.position);
         if (distance < DISTANCE_FOR_PROXIMITY_CHECK) {
-          const encounter = getEncounter(
-            flight1,
-            flight2,
-            SPEED_METERS_PER_SECOND
-          );
+          const encounter = getEncounter(flight1, flight2);
           if (encounter) {
             warnings.push({
               flights: { id1: flight1.id, id2: flight2.id },
@@ -145,11 +208,12 @@ function getDistanceLowerBoundary(
     0.95 *
     Math.sqrt(
       Math.pow(
-        (position2.latitude - position1.latitude) / MAX_LATITUDE_PER_METER,
+        (position2.latitude - position1.latitude) * METERS_PER_LATITUDE,
         2
       ) +
         Math.pow(
-          (position2.longitude - position1.longitude) / MAX_LONGITUDE_PER_METER,
+          (position2.longitude - position1.longitude) *
+            MIN_METERS_PER_LONGITUDE,
           2
         )
     )
@@ -159,9 +223,8 @@ function getDistanceLowerBoundary(
 function advance(snapshot: FlightsSnapshot): FlightsSnapshot {
   const now = Date.now();
   const timeDiffSeconds = (now - snapshot.snapShotTime) / 1000;
-  const distance = SPEED_METERS_PER_SECOND * timeDiffSeconds;
   const flights = snapshot.flights.map((flight) => {
-    return move(flight, distance);
+    return move(flight, flight.velocity * timeDiffSeconds);
   });
   const warnings = findProximityWarnings(flights);
   return {
@@ -181,30 +244,29 @@ type FlightsSnapshot = {
 
 export function getEncounter(
   flight1: Flight,
-  flight2: Flight,
-  velocity: number
+  flight2: Flight
 ): {
   timeToEncounter: number;
-  position1: { now: Coordinate; encounter: Coordinate; future: Coordinate };
-  position2: { now: Coordinate; encounter: Coordinate; future: Coordinate };
+  position1: { now: Coordinate; encounter: Coordinate };
+  position2: { now: Coordinate; encounter: Coordinate };
   distance: number;
 } | null {
   const longitudeToMeters =
     1 / getNormalizedDirection(Math.PI / 2, 50).longitude;
   const a =
-    LATITUDE_TO_METERS *
+    METERS_PER_LATITUDE *
     (flight2.position.latitude - flight1.position.latitude);
   const b =
-    velocity *
-    LATITUDE_TO_METERS *
-    (flight2.axis.roll.latitude - flight1.axis.roll.latitude);
+    METERS_PER_LATITUDE *
+    (flight2.axis.roll.latitude * flight2.velocity -
+      flight1.axis.roll.latitude * flight1.velocity);
   const c =
     longitudeToMeters *
     (flight2.position.longitude - flight1.position.longitude);
   const d =
-    velocity *
     longitudeToMeters *
-    (flight2.axis.roll.longitude - flight1.axis.roll.longitude);
+    (flight2.axis.roll.longitude * flight2.velocity -
+      flight1.axis.roll.longitude * flight1.velocity);
   const divisor = d * d + b * b;
   if (divisor < 0.00000000001) {
     return null;
@@ -225,12 +287,7 @@ export function getEncounter(
         encounter: advancePosition(
           flight1.position,
           flight1.heading,
-          timeOfClosestEncounter * velocity
-        ).position,
-        future: advancePosition(
-          flight1.position,
-          flight1.heading,
-          (timeOfClosestEncounter + 30) * velocity
+          timeOfClosestEncounter * flight1.velocity
         ).position,
       },
       position2: {
@@ -238,12 +295,7 @@ export function getEncounter(
         encounter: advancePosition(
           flight2.position,
           flight2.heading,
-          timeOfClosestEncounter * velocity
-        ).position,
-        future: advancePosition(
-          flight2.position,
-          flight2.heading,
-          (timeOfClosestEncounter + 30) * velocity
+          timeOfClosestEncounter * flight2.velocity
         ).position,
       },
       timeToEncounter: timeOfClosestEncounter,
