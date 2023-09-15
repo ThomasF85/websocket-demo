@@ -9,7 +9,6 @@ import {
   getNormalizedDirection,
   ProximityWarning,
 } from "@websocket-demo/shared";
-import { get } from "http";
 
 const SPEED_METERS_PER_SECOND = 250;
 const DISTANCE_FOR_PROXIMITY_CHECK = 50000;
@@ -95,7 +94,7 @@ function createFlights(count: number, area: Area): Flight[] {
 }
 
 function move(flight: Flight, distanceMeters: number): Flight {
-  const position = advancePosition(
+  const { position, heading } = advancePosition(
     flight.position,
     flight.heading,
     distanceMeters
@@ -103,6 +102,7 @@ function move(flight: Flight, distanceMeters: number): Flight {
   return {
     ...flight,
     position,
+    heading,
     axis: getAxis(position.latitude, flight.heading),
   };
 }
@@ -226,12 +226,12 @@ export function getEncounter(
           flight1.position,
           flight1.heading,
           timeOfClosestEncounter * velocity
-        ),
+        ).position,
         future: advancePosition(
           flight1.position,
           flight1.heading,
           (timeOfClosestEncounter + 30) * velocity
-        ),
+        ).position,
       },
       position2: {
         now: flight2.position,
@@ -239,12 +239,12 @@ export function getEncounter(
           flight2.position,
           flight2.heading,
           timeOfClosestEncounter * velocity
-        ),
+        ).position,
         future: advancePosition(
           flight2.position,
           flight2.heading,
           (timeOfClosestEncounter + 30) * velocity
-        ),
+        ).position,
       },
       timeToEncounter: timeOfClosestEncounter,
     };

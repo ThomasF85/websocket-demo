@@ -52,10 +52,28 @@ export function advancePosition(
       Math.sin(heading) * Math.sin(angularDistance) * Math.cos(la1),
       Math.cos(angularDistance) - Math.sin(la1) * Math.sin(la2)
     );
+  const newHeading = getNewBearing(la1, la2, lo1, lo2);
   return {
-    latitude: la2 * TO_DEGREES,
-    longitude: lo2 * TO_DEGREES,
+    position: {
+      latitude: la2 * TO_DEGREES,
+      longitude: lo2 * TO_DEGREES,
+    },
+    heading: newHeading,
   };
+}
+
+function getNewBearing(p1La: number, p2La: number, p1Lo: number, p2Lo: number) {
+  const la2 = p1La;
+  const la1 = p2La;
+  const deltaLo = p1Lo - p2Lo;
+
+  const y = Math.sin(deltaLo) * Math.cos(la2);
+  const x =
+    Math.cos(la1) * Math.sin(la2) -
+    Math.sin(la1) * Math.cos(la2) * Math.cos(deltaLo);
+  const newHeading = Math.atan2(y, x);
+
+  return newHeading > 0 ? newHeading - Math.PI : newHeading + Math.PI;
 }
 
 export function getDistance(position1: Coordinate, position2: Coordinate) {
