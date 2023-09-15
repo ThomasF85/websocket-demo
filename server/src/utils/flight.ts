@@ -13,7 +13,7 @@ export function move(flight: Flight, meters: number): Flight {
     ...flight,
     position: newPosition,
     heading: newHeading,
-    axis: getAxis(flight.position.latitude, flight.heading),
+    axis: getAxis(newPosition.latitude, newHeading),
   };
 }
 

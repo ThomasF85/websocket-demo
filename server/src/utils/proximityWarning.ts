@@ -113,7 +113,9 @@ function approximateClosestEncounter(
   flight1: Flight,
   flight2: Flight
 ): { time: number; distance: number } | null {
-  const metersPerLongitude = RADIUS_EARTH * Math.cos(flight1.position.latitude);
+  const metersPerLongitude =
+    RADIUS_EARTH *
+    Math.cos(0.5 * (flight1.position.latitude + flight2.position.latitude));
   const a =
     METERS_PER_LATITUDE *
     (flight2.position.latitude - flight1.position.latitude);
